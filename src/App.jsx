@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import axios from 'axios';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [videoUrl, setVideoUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      const formattedUrl = videoUrl.trim();
+      if (!formattedUrl.startsWith('http')) {
+        alert('Please enter a valid YouTube video URL.');
+        return;
+      }
+
+      setIsLoading(true);
+
+      const response = await axios.get('http://localhost:5000/download', {
+        params: {
+          url: formattedUrl,
+        },
+        responseType: 'blob',
+      });
+
+      setIsLoading(false);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'video.mp4');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Error downloading video:', error);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div>
+      <h1>YouTube Video Downloader</h1>
+      <input
+        type="text"
+        value={videoUrl}
+        onChange={(e) => setVideoUrl(e.target.value)}
+        placeholder="Enter YouTube Video URL"
+      />
+      <button onClick={handleDownload}>Download</button>
+      {isLoading && <p>Loading...</p>}
+    </div>
+  );
+};
 
-export default App
+export default App;
